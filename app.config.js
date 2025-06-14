@@ -1,7 +1,8 @@
-import 'dotenv/config'; // 이 줄은 파일의 가장 위에 있어야 합니다.
+import 'dotenv/config'; // 항상 파일 맨 위에 위치
 
 export default {
     expo: {
+        schema: "MyWeatherApp",
         name: "WeatherApp",
         slug: "weather-app",
         version: "1.0.0",
@@ -11,34 +12,34 @@ export default {
         splash: {
             image: "./assets/splash.png",
             resizeMode: "contain",
-            backgroundColor: "#ffffff"
+            backgroundColor: "#ffffff",
         },
-        assetBundlePatterns: [
-            "**/*"
-        ],
+        assetBundlePatterns: ["**/*"],
         ios: {
             supportsTablet: true,
-            // iOS Google Maps API 키 설정을 여기에 추가
             config: {
-                googleMapsApiKey: process.env.GOOGLE_MAPS_API_KEY_IOS, // .env 파일에서 iOS용 Google Maps API 키를 불러옵니다.
-            }
+                googleMapsApiKey: process.env.GOOGLE_MAPS_API_KEY_IOS,
+            },
         },
         android: {
             adaptiveIcon: {
                 foregroundImage: "./assets/adaptive-icon.png",
-                backgroundColor: "#ffffff"
-            }
-            // Android Google Maps API 키 설정은 요청에 따라 변경하지 않았습니다.
-            // 필요하다면 이곳에 "config": { "googleMaps": { "apiKey": process.env.GOOGLE_MAPS_API_KEY_ANDROID } } 를 추가하세요.
+                backgroundColor: "#ffffff",
+            },
+            config: {
+                googleMaps: {
+                    apiKey: process.env.GOOGLE_MAPS_API_KEY_ANDROID,
+                },
+            },
         },
         web: {
-            favicon: "./assets/favicon.png"
+            favicon: "./assets/favicon.png",
         },
         extra: {
             OPEN_WEATHER_API_KEY: process.env.OPEN_WEATHER_API_KEY,
-            // iOS Google Maps API 키를 extra 필드에 추가합니다.
             GOOGLE_MAPS_API_KEY_IOS: process.env.GOOGLE_MAPS_API_KEY_IOS,
-            // 다른 API 키 (예: AIR_KOREA_API_KEY)도 필요하다면 여기에 추가하세요.
-        }
-    }
+            GOOGLE_MAPS_API_KEY_ANDROID: process.env.GOOGLE_MAPS_API_KEY_ANDROID,
+            // 필요하면 여기에 다른 API 키 추가 가능
+        },
+    },
 };

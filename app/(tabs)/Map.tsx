@@ -1,72 +1,95 @@
-import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, ActivityIndicator, Alert, Dimensions } from 'react-native';
-import MapView, { Marker, UrlTile } from 'react-native-maps'; // UrlTile 임포트 추가
+import React, { useEffect, useState, useRef } from 'react';
+import {
+    View,
+    Text,
+    StyleSheet,
+    ActivityIndicator,
+    Alert,
+    Dimensions,
+    TouchableOpacity,
+} from 'react-native';
+import MapView, { Marker, UrlTile } from 'react-native-maps';
 import * as Location from 'expo-location';
-import Constants from 'expo-constants'; // Google Maps API 키를 위해 추가
-import { Ionicons } from '@expo/vector-icons'; // 아이콘 사용을 위해 임포트
+import Constants from 'expo-constants';
+import { Ionicons } from '@expo/vector-icons';
 
-// 화면 높이와 너비를 가져와 반응형 디자인에 활용
 const { width, height } = Dimensions.get('window');
-const MAP_HEIGHT = height * 0.65; // 지도 높이 비율 조정
+const MAP_HEIGHT = height * 0.65;
 
 export default function Map() {
+    const mapRef = useRef<MapView>(null);
+
     const [currentLocation, setCurrentLocation] = useState<any>(null);
     const [loading, setLoading] = useState(true);
-    const [googleMapsApiKeyError, setGoogleMapsApiKeyError] = useState<boolean>(false);
-    // OpenWeatherMap API 키 (강수량 타일용)
+    const [googleMapsApiKeyError, setGoogleMapsApiKeyError] = useState(false);
+    const [openWeatherKeyMissing, setOpenWeatherKeyMissing] = useState(false);
+
     const OPEN_WEATHER_API_KEY = Constants.expoConfig?.extra?.OPEN_WEATHER_API_KEY;
 
     useEffect(() => {
         const checkApiKeys = () => {
             const iosKey = Constants.expoConfig?.ios?.config?.googleMapsApiKey;
-            const androidKey = Constants.expoConfig?.android?.config?.googleMaps?.apiKey; // Android 키도 다시 확인하도록 추가
+            const androidKey = Constants.expoConfig?.android?.config?.googleMaps?.apiKey;
 
-            if (!iosKey && !androidKey) { // iOS 또는 Android 키 둘 다 없으면 경고
+            const googleMissing = !iosKey && !androidKey;
+            const weatherMissing = !OPEN_WEATHER_API_KEY;
+
+            if (googleMissing) {
                 setGoogleMapsApiKeyError(true);
+            }
+
+            if (weatherMissing) {
+                setOpenWeatherKeyMissing(true);
+            }
+
+            if (googleMissing || weatherMissing) {
                 Alert.alert(
-                    "Google Maps API 키 필요",
-                    "iOS 또는 Android Google Maps API 키가 app.config.js에 설정되지 않았습니다. 지도가 제대로 표시되지 않을 수 있습니다."
+                    'API 키 설정 필요',
+                    `${googleMissing ? 'Google Maps API 키' : ''}${googleMissing && weatherMissing ? '와 ' : ''}${weatherMissing ? 'OpenWeather API 키' : ''}가 설정되지 않았습니다.\n일부 기능이 작동하지 않을 수 있습니다.`
                 );
             }
-
-            if (!OPEN_WEATHER_API_KEY) {
-                Alert.alert("API 키 오류", "OpenWeather API 키가 설정되지 않았습니다. 강수량 정보를 불러올 수 없습니다.");
-            }
         };
-        checkApiKeys();
 
         const fetchLocation = async () => {
             setLoading(true);
             try {
                 const { status } = await Location.requestForegroundPermissionsAsync();
                 if (status !== 'granted') {
-                    Alert.alert('위치 접근 권한 필요', '지도를 표시하려면 위치 접근 권한이 필요해요!');
-                    setLoading(false);
+                    Alert.alert(
+                        '위치 권한 필요',
+                        '지도를 사용하려면 위치 접근 권한이 필요합니다.'
+                    );
+                    setLoading(false); // 권한 거부 시 로딩 중단
                     return;
                 }
 
                 const loc = await Location.getCurrentPositionAsync({});
-                setCurrentLocation({
-                    latitude: loc.coords.latitude,
-                    longitude: loc.coords.longitude,
-                    latitudeDelta: 0.0922, // 맵 확대 레벨
-                    longitudeDelta: 0.0421,
-                });
+                if (loc && loc.coords) {
+                    setCurrentLocation({
+                        latitude: loc.coords.latitude,
+                        longitude: loc.coords.longitude,
+                        latitudeDelta: 0.0922,
+                        longitudeDelta: 0.0421,
+                    });
+                } else {
+                    throw new Error('위치 정보가 없습니다.');
+                }
             } catch (error) {
-                console.error('위치 불러오는 중 오류:', error);
-                Alert.alert('위치 오류', '현재 위치를 불러오지 못했어요.');
+                console.error('위치 오류:', error);
+                Alert.alert('위치 오류', '현재 위치를 불러오지 못했습니다.');
             } finally {
                 setLoading(false);
             }
         };
 
+        checkApiKeys();
         fetchLocation();
-    }, [OPEN_WEATHER_API_KEY]); // OpenWeather API 키도 의존성에 추가
+    }, [OPEN_WEATHER_API_KEY]);
 
     if (loading) {
         return (
             <View style={styles.loadingContainer}>
-                <ActivityIndicator size="large" color="#4285F4" /> {/* 구글 블루 계열 색상 */}
+                <ActivityIndicator size="large" color="#4285F4" />
                 <Text style={styles.loadingText}>위치와 지도 데이터를 불러오는 중...</Text>
             </View>
         );
@@ -77,7 +100,7 @@ export default function Map() {
             <View style={styles.container}>
                 <Text style={styles.errorText}>
                     <Ionicons name="alert-circle-outline" size={24} color="#d9534f" />
-                    {"\n"}지도를 표시할 수 없어요! 위치 권한과 GPS 설정을 확인해주세요.
+                    {"\n"}지도를 표시할 수 없습니다. 위치 권한 및 GPS 설정을 확인해주세요.
                 </Text>
             </View>
         );
@@ -85,45 +108,65 @@ export default function Map() {
 
     return (
         <View style={styles.container}>
-            <Text style={styles.title}>
-                <Ionicons name="rainy-outline" size={30} color="#0056b3" /> 강수량 지도
-            </Text>
+            <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 50 }}>
+                <Ionicons name="rainy-outline" size={30} color="#0056b3" />
+                <Text style={styles.title}>강수량 지도</Text>
+            </View>
+
             {googleMapsApiKeyError && (
-                <Text style={styles.warningText}>Google Maps API 키가 없어 지도가 제대로 표시되지 않을 수 있습니다.</Text>
+                <Text style={styles.warningText}>
+                    Google Maps API 키가 설정되지 않았습니다. 지도가 제대로 표시되지 않을 수 있습니다.
+                </Text>
             )}
-            {!OPEN_WEATHER_API_KEY && (
-                <Text style={styles.warningText}>OpenWeather API 키가 없어 강수량 타일이 표시되지 않을 수 있습니다.</Text>
+            {openWeatherKeyMissing && (
+                <Text style={styles.warningText}>
+                    OpenWeather API 키가 없습니다. 강수량 정보가 표시되지 않습니다.
+                </Text>
             )}
 
             <View style={styles.mapContainer}>
                 <MapView
+                    ref={mapRef}
                     style={styles.map}
                     initialRegion={currentLocation}
-                    showsUserLocation={true}
-                    followsUserLocation={true}
-                    onRegionChangeComplete={(region) => console.log('Map region changed:', region)}
-                    // Google Maps 명시적 사용 (Android에서만 필요, iOS는 MapKit 기본)
+                    showsUserLocation
+                    followsUserLocation
+                    onRegionChangeComplete={(region) =>
+                        console.log('Map region changed:', region)
+                    }
                     provider="google"
                 >
-                    {/* OpenWeatherMap 강수량 타일 레이어 추가 (API 키 필요!) */}
                     {OPEN_WEATHER_API_KEY && (
                         <UrlTile
                             urlTemplate={`https://tile.openweathermap.org/map/precipitation_new/{z}/{x}/{y}.png?appid=${OPEN_WEATHER_API_KEY}`}
-                            zIndex={-1} // 기본 지도 레이어 위에 표시 (높은 숫자일수록 위)
-                            maximumZ={10} // 최대 줌 레벨
-                            minimumZ={0}  // 최소 줌 레벨
+                            zIndex={-1}
+                            maximumZ={10}
+                            minimumZ={0}
                         />
                     )}
 
-                    {currentLocation && (
-                        <Marker
-                            coordinate={{ latitude: currentLocation.latitude, longitude: currentLocation.longitude }}
-                            title="현재 위치"
-                            description="여기에 있습니다"
-                            pinColor="#007bff" // 마커 색상 변경
-                        />
-                    )}
+                    <Marker
+                        coordinate={{
+                            latitude: currentLocation.latitude,
+                            longitude: currentLocation.longitude,
+                        }}
+                        title="현재 위치"
+                        description="여기에 있습니다"
+                        pinColor="#007bff"
+                    />
                 </MapView>
+
+                {/* 현위치로 돌아가기 버튼 */}
+                <TouchableOpacity
+                    style={styles.myLocationButton}
+                    onPress={() => {
+                        if (mapRef.current && currentLocation) {
+                            mapRef.current.animateToRegion(currentLocation, 1000);
+                        }
+                    }}
+                >
+                    <Ionicons name="locate-outline" size={28} color="#007bff" />
+                </TouchableOpacity>
             </View>
         </View>
     );
@@ -134,7 +177,7 @@ const styles = StyleSheet.create({
         flex: 1,
         justifyContent: 'center',
         alignItems: 'center',
-        backgroundColor: '#e6f7ff', // 더 밝고 부드러운 하늘색 배경
+        backgroundColor: '#e6f7ff',
         paddingVertical: 25,
     },
     loadingContainer: {
@@ -159,7 +202,7 @@ const styles = StyleSheet.create({
     },
     warningText: {
         fontSize: 13,
-        color: '#e74c3c', // 경고 메시지 색상
+        color: '#e74c3c',
         textAlign: 'center',
         marginBottom: 10,
         paddingHorizontal: 15,
@@ -167,35 +210,41 @@ const styles = StyleSheet.create({
     title: {
         fontSize: 32,
         fontWeight: 'bold',
-        marginTop: 50,
-        color: '#0056b3', // 진한 파란색 제목
-        flexDirection: 'row', // 아이콘과 텍스트를 나란히
-        alignItems: 'center',
+        color: '#0056b3',
+        marginLeft: 10,
     },
     mapContainer: {
-        width: width * 0.90, // 화면 너비의 95% 사용
+        width: width * 0.9,
         height: MAP_HEIGHT,
-        borderRadius: 20, // 더 둥근 모서리
-        overflow: 'hidden', // 지도 바깥으로 나가는 그림자/테두리 처리
+        borderRadius: 20,
+        overflow: 'hidden',
         marginTop: 25,
         marginBottom: 25,
         shadowColor: '#000',
-        shadowOffset: { width: 0, height: 6 }, // 그림자 깊이 증가
+        shadowOffset: { width: 0, height: 6 },
         shadowOpacity: 0.25,
-        shadowRadius: 15, // 그림자 부드럽게
-        elevation: 12, // Android 그림자
+        shadowRadius: 15,
+        elevation: 12,
         borderWidth: 1,
-        borderColor: '#b3e0ff', // 연한 파란색 테두리
+        borderColor: '#b3e0ff',
     },
     map: {
-        flex: 1, // 컨테이너에 맞춰 채움
+        flex: 1,
     },
-    description: {
-        fontSize: 15,
-        color: '#666',
-        textAlign: 'center',
-        marginTop: 10,
-        paddingHorizontal: 20,
-        lineHeight: 22,
+    myLocationButton: {
+        position: 'absolute',
+        bottom: 25,
+        right: 25,
+        backgroundColor: '#fff',
+        borderRadius: 30,
+        width: 50,
+        height: 50,
+        justifyContent: 'center',
+        alignItems: 'center',
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 3 },
+        shadowOpacity: 0.3,
+        shadowRadius: 5,
+        elevation: 7,
     },
 });
