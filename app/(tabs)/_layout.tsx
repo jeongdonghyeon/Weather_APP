@@ -7,7 +7,6 @@ import Colors from '@/constants/Colors';
 import { useColorScheme } from '@/components/useColorScheme';
 import { useClientOnlyValue } from '@/components/useClientOnlyValue';
 
-// You can explore the built-in icon families and icons on the web at https://icons.expo.fyi/
 function TabBarIcon(props: {
   name: React.ComponentProps<typeof FontAwesome>['name'];
   color: string;
@@ -30,7 +29,7 @@ export default function TabLayout() {
         name="index"
         options={{
           title: 'Home',
-          tabBarIcon: ({ color }) => <TabBarIcon name="code" color={color} />,
+          tabBarIcon: ({ color }) => <TabBarIcon name="home" color={color} />,
           headerRight: () => (
             <Link href="/modal" asChild>
               <Pressable>
@@ -47,13 +46,24 @@ export default function TabLayout() {
           ),
         }}
       />
-      <Tabs.Screen
-        name="two"
-        options={{
-          title: 'Tab Two',
-          tabBarIcon: ({ color }) => <TabBarIcon name="code" color={color} />,
-        }}
-      />
+
+        <Tabs.Screen
+            name="Dust"
+            options={{
+                title: '미세먼지',
+                tabBarIcon: ({ color }) => <TabBarIcon name="cloud" color={color} />, // 미세먼지 관련 아이콘 (FontAwesome에 'wind' 아이콘이 있다면)
+
+            }}
+        />
+
+
+        <Tabs.Screen
+            name="Map"
+            options={{
+                title: '강수량 지도',
+                tabBarIcon: ({ color }) => <TabBarIcon name="map" color={color} />, // 지도 관련 아이콘
+            }}
+        />
     </Tabs>
   );
 }

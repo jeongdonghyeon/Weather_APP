@@ -2,15 +2,15 @@ import 'dotenv/config'; // 항상 파일 맨 위에 위치
 
 export default {
     expo: {
-        schema: "MyWeatherApp",
-        name: "WeatherApp",
-        slug: "weather-app",
+        schema: "myweatherapp",
+        name: "MyWeatherApp",
+        slug: "MyWeatherApp",
         version: "1.0.0",
         orientation: "portrait",
-        icon: "./assets/icon.png",
+        icon: "./assets/images/icon.png",
         userInterfaceStyle: "light",
         splash: {
-            image: "./assets/splash.png",
+            image: "./assets/images/splash-icon.png",
             resizeMode: "contain",
             backgroundColor: "#ffffff",
         },
@@ -23,7 +23,7 @@ export default {
         },
         android: {
             adaptiveIcon: {
-                foregroundImage: "./assets/adaptive-icon.png",
+                foregroundImage: "./assets/images/adaptive-icon.png",
                 backgroundColor: "#ffffff",
             },
             config: {
@@ -33,13 +33,14 @@ export default {
             },
         },
         web: {
-            favicon: "./assets/favicon.png",
+            favicon: "./assets/images/favicon.png",
         },
         extra: {
             OPEN_WEATHER_API_KEY: process.env.OPEN_WEATHER_API_KEY,
             GOOGLE_MAPS_API_KEY_IOS: process.env.GOOGLE_MAPS_API_KEY_IOS,
             GOOGLE_MAPS_API_KEY_ANDROID: process.env.GOOGLE_MAPS_API_KEY_ANDROID,
-            // 필요하면 여기에 다른 API 키 추가 가능
+            // 아래 라인은 한국 공공데이터포털 미세먼지 API 키를 위한 것입니다.
+            KOREA_DATA_PORTAL_FINE_DUST_API_KEY: process.env.KOREA_DATA_PORTAL_FINE_DUST_API_KEY,
         },
     },
 };
