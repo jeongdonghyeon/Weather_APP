@@ -1,4 +1,4 @@
-import 'dotenv/config'; // 항상 파일 맨 위에 위치
+import 'dotenv/config';
 
 export default {
     expo: {
@@ -17,8 +17,9 @@ export default {
         assetBundlePatterns: ["**/*"],
         ios: {
             supportsTablet: true,
+            bundleIdentifier: "com.yourcompany.myweatherapp",
             config: {
-                googleMapsApiKey: process.env.GOOGLE_MAPS_API_KEY_IOS,
+                googleMapsApiKey: process.env.Maps_API_KEY_IOS,
             },
         },
         android: {
@@ -26,21 +27,31 @@ export default {
                 foregroundImage: "./assets/images/adaptive-icon.png",
                 backgroundColor: "#ffffff",
             },
+
+            package: "com.DH.myweatherapp.test",
             config: {
                 googleMaps: {
-                    apiKey: process.env.GOOGLE_MAPS_API_KEY_ANDROID,
+                    apiKey: process.env.Maps_API_KEY_ANDROID,
                 },
             },
         },
         web: {
             favicon: "./assets/images/favicon.png",
         },
+        updates: {
+            url: "https://u.expo.dev/124a2ef0-3dad-41eb-b693-237abf0e4de7",
+        },
+        runtimeVersion: {
+            policy: "appVersion",
+        },
         extra: {
             OPEN_WEATHER_API_KEY: process.env.OPEN_WEATHER_API_KEY,
-            GOOGLE_MAPS_API_KEY_IOS: process.env.GOOGLE_MAPS_API_KEY_IOS,
-            GOOGLE_MAPS_API_KEY_ANDROID: process.env.GOOGLE_MAPS_API_KEY_ANDROID,
-            // 아래 라인은 한국 공공데이터포털 미세먼지 API 키를 위한 것입니다.
+            Maps_API_KEY_IOS: process.env.Maps_API_KEY_IOS,
+            Maps_API_KEY_ANDROID: process.env.Maps_API_KEY_ANDROID,
             KOREA_DATA_PORTAL_FINE_DUST_API_KEY: process.env.KOREA_DATA_PORTAL_FINE_DUST_API_KEY,
+            eas: {
+                projectId: "124a2ef0-3dad-41eb-b693-237abf0e4de7",
+            },
         },
     },
 };
